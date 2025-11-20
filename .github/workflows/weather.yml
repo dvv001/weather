@@ -1,14 +1,13 @@
 name: '定时天气警报'
-
 # 设定触发时间：每天早上 7:00 UTC (请根据您的时区调整)
 # ⚠️ 注意：GitHub Actions 默认使用 UTC 时间。
 # 例如：如果您的时区是 UTC+8 (北京时间)，则 UTC 23:00 就是第二天早上 7:00。
 on:
   schedule:
     # 每天 UTC 时间 23:00 运行
-    - cron: '0 23 * * *' 
+    - cron: '0 23 * * *'
   # 允许手动触发，方便您测试
-  workflow_dispatch: 
+  workflow_dispatch:
 
 jobs:
   check_weather:
@@ -31,39 +30,37 @@ jobs:
           # 从 Secret 中获取您的 API 密钥和 ntfy 主题
           API_KEY: ${{ secrets.WEATHER_API_KEY }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
-          
-          # --- 自定义配置 ---
           CITY: "Shenzhen"           # 替换为您要查询的城市
           THRESHOLD: 20              # 警告阈值 (°C)
-          WEATHER_URL: "http://api.openweathermap.org/data/2.5/weather?q=${{ env.CITY }}&appid=${{ env.API_KEY }}&units=metric"
-        
         run: |
-          # 1. 查询天气数据
-          WEATHER_DATA=$(curl -s "${{ env.WEATHER_URL }}")
-            echo "--- API 原始响应开始 ---"
-  echo "$WEATHER_DATA"
-  echo "--- API 原始响应结束 ---"
-          # 2. 从 JSON 结果中提取当前温度
-          # 使用 Python 的简单脚本来解析 JSON 并获取温度
+          # 1. 构造天气 API URL
+          WEATHER_URL="http://api.openweathermap.org/data/2.5/weather?q=${CITY}&appid=${API_KEY}&units=metric"
+
+          # 2. 查询天气数据
+          WEATHER_DATA=$(curl -s "$WEATHER_URL")
+          echo "--- API 原始响应开始 ---"
+          echo "$WEATHER_DATA"
+          echo "--- API 原始响应结束 ---"
+
+          # 3. 从 JSON 结果中提取当前温度
           CURRENT_TEMP=$(echo "$WEATHER_DATA" | python -c "import sys, json; print(json.load(sys.stdin)['main']['temp'])")
-          
-          # 3. 设定 ntfy 变量的默认值
+
+          # 4. 设定 ntfy 变量的默认值
           NTFY_PRIORITY="1" # 默认最低优先级 (静默)
           NTFY_TITLE="✅ 天气检查正常"
           NTFY_MESSAGE="当前温度：${CURRENT_TEMP}°C。一切正常。"
-          
-          # 4. 逻辑判断
-          # 注意：GitHub Actions 的 shell 环境默认使用 Bash 语法
-          if (( $(echo "${CURRENT_TEMP} < ${{ env.THRESHOLD }}" | bc -l) )); then
+
+          # 5. 逻辑判断
+          if (( $(echo "${CURRENT_TEMP} < ${THRESHOLD}" | bc -l) )); then
             # 气温低于阈值 (20°C)，设置为紧急警报
             NTFY_PRIORITY="20"
-            NTFY_TITLE="❄️ 气温警报！${{ env.CITY }} 气温骤降"
-            NTFY_MESSAGE="当前温度：${CURRENT_TEMP}°C，已低于 ${{ env.THRESHOLD }}°C 的警告线。请注意保暖！"
+            NTFY_TITLE="❄️ 气温警报！${CITY} 气温骤降"
+            NTFY_MESSAGE="当前温度：${CURRENT_TEMP}°C，已低于 ${THRESHOLD}°C 的警告线。请注意保暖！"
           fi
-          
-          # 5. 发送 ntfy 通知
+
+          # 6. 发送 ntfy 通知
           curl -H "Title: ${NTFY_TITLE}" \
                -H "Priority: ${NTFY_PRIORITY}" \
                -H "Tags: thermometer" \
                -d "${NTFY_MESSAGE}" \
-               "https://ntfy.sh/${{ env.NTFY_TOPIC }}"
+               "https://ntfy.sh/${NTFY_TOPIC}"
