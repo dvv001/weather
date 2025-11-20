@@ -53,7 +53,7 @@ jobs:
           # 5. 逻辑判断
           if (( $(echo "${CURRENT_TEMP} < ${THRESHOLD}" | bc -l) )); then
             # 气温低于阈值 (20°C)，设置为紧急警报
-            NTFY_PRIORITY="20"
+            NTFY_PRIORITY="5"
             NTFY_TITLE="❄️ 气温警报！${CITY} 气温骤降"
             NTFY_MESSAGE="当前温度：${CURRENT_TEMP}°C，已低于 ${THRESHOLD}°C 的警告线。请注意保暖！"
           fi
