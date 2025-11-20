@@ -33,7 +33,7 @@ jobs:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           
           # --- 自定义配置 ---
-          CITY: "shenzhen"           # 替换为您要查询的城市
+          CITY: "Shenzhen"           # 替换为您要查询的城市
           THRESHOLD: 20              # 警告阈值 (°C)
           WEATHER_URL: "http://api.openweathermap.org/data/2.5/weather?q=${{ env.CITY }}&appid=${{ env.API_KEY }}&units=metric"
         
@@ -53,8 +53,8 @@ jobs:
           # 4. 逻辑判断
           # 注意：GitHub Actions 的 shell 环境默认使用 Bash 语法
           if (( $(echo "${CURRENT_TEMP} < ${{ env.THRESHOLD }}" | bc -l) )); then
-            # 气温低于阈值 (5°C)，设置为紧急警报
-            NTFY_PRIORITY="5"
+            # 气温低于阈值 (20°C)，设置为紧急警报
+            NTFY_PRIORITY="20"
             NTFY_TITLE="❄️ 气温警报！${{ env.CITY }} 气温骤降"
             NTFY_MESSAGE="当前温度：${CURRENT_TEMP}°C，已低于 ${{ env.THRESHOLD }}°C 的警告线。请注意保暖！"
           fi
