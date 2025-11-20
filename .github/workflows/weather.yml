@@ -40,7 +40,9 @@ jobs:
         run: |
           # 1. 查询天气数据
           WEATHER_DATA=$(curl -s "${{ env.WEATHER_URL }}")
-          
+            echo "--- API 原始响应开始 ---"
+  echo "$WEATHER_DATA"
+  echo "--- API 原始响应结束 ---"
           # 2. 从 JSON 结果中提取当前温度
           # 使用 Python 的简单脚本来解析 JSON 并获取温度
           CURRENT_TEMP=$(echo "$WEATHER_DATA" | python -c "import sys, json; print(json.load(sys.stdin)['main']['temp'])")
